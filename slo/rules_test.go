@@ -1566,9 +1566,36 @@ func TestObjective_IncreaseRules(t *testing.T) {
 				Labels: map[string]string{"severity": "critical", "slo": "up-targets"},
 			}},
 		},
-	}}
+	}, {
+		name: "http-latency-with-custom-le",
+		slo:  objectiveHTTPLatencyWithCustomLe(),
+		rules: monitoringv1.RuleGroup{
+			Name:     "monitoring-http-latency-increase",
+			Interval: monitoringDuration("2m30s"),
+			Rules: []monitoringv1.Rule{{
+				Record: "http_request_duration_seconds:increase4w",
+				Expr:   intstr.FromString(`sum by (code) (increase(http_request_duration_seconds_count{code=~"2..",job="metrics-service-thanos-receive-default",le="+Inf"}[4w]))`),
+				Labels: map[string]string{"job": "metrics-service-thanos-receive-default", "slo": "monitoring-http-latency", "le": "+Inf"},
+			}, {
+				Record: "http_request_duration_seconds:increase4w",
+				Expr:   intstr.FromString(`sum by (code) (increase(http_request_duration_seconds_bucket{code=~"2..",job="metrics-service-thanos-receive-default",le="1"}[4w]))`),
+				Labels: map[string]string{"job": "metrics-service-thanos-receive-default", "slo": "monitoring-http-latency", "le": "1"},
+			}, {
+				Alert:  "SLOMetricAbsent",
+				Expr:   intstr.FromString(`absent(http_request_duration_seconds_count{code=~"2..",job="metrics-service-thanos-receive-default",le="+Inf"}) == 1`),
+				For:    monitoringDuration("2m"),
+				Labels: map[string]string{"job": "metrics-service-thanos-receive-default", "slo": "monitoring-http-latency", "severity": "critical", "le": "+Inf"},
+			}, {
+				Alert:  "SLOMetricAbsent",
+				Expr:   intstr.FromString(`absent(http_request_duration_seconds_bucket{code=~"2..",job="metrics-service-thanos-receive-default",le="1"}) == 1`),
+				For:    monitoringDuration("2m"),
+				Labels: map[string]string{"job": "metrics-service-thanos-receive-default", "slo": "monitoring-http-latency", "le": "1", "severity": "critical"},
+			}},
+		},
+	},
+	}
 
-	require.Len(t, testcases, 17)
+	require.Len(t, testcases, 18)
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {

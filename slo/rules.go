@@ -837,7 +837,10 @@ func (o Objective) IncreaseRules() (monitoringv1.RuleGroup, error) {
 		}
 		ruleLabelsLe := map[string]string{"le": le}
 		for k, v := range ruleLabels {
-			ruleLabelsLe[k] = v
+			// avoid overwriting the specific `le` label from the success rule
+			if k != "le" {
+				ruleLabelsLe[k] = v
+			}
 		}
 
 		rules = append(rules, monitoringv1.Rule{

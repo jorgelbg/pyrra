@@ -346,6 +346,15 @@ var (
 		o.Indicator.BoolGauge.Metric.LabelMatchers = append(o.Indicator.BoolGauge.LabelMatchers, matcher)
 		return o
 	}
+	objectiveHTTPLatencyWithCustomLe = func() Objective {
+		o := objectiveHTTPLatency()
+		o.Indicator.Latency.Total.LabelMatchers = append(o.Indicator.Latency.Total.LabelMatchers, &labels.Matcher{
+			Type:  labels.MatchEqual,
+			Name:  "le",
+			Value: "+Inf",
+		})
+		return o
+	}
 )
 
 func TestObjective_QueryTotal(t *testing.T) {
